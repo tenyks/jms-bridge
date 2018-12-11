@@ -1,0 +1,16 @@
+#app
+server:
+    port: 8102
+
+#spring
+spring:
+  application:
+    name: DocConvertServiceApp
+  profiles:
+    active: dev
+  devtools:
+    restart:
+      enabled: false
+
+
+

@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="connectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+        <property name="brokerURL" value="tcp://192.168.4.250:61616?tcpNoDelay=true" />
+        <property name="useAsyncSend" value="false" />
+    </bean>
+
+    <!-- 配置connectionFactory -->
+    <bean id="jmsFactory" class="org.springframework.jms.connection.CachingConnectionFactory">
+        <property name="targetConnectionFactory" ref="connectionFactory" />
+        <property name="sessionCacheSize" value="10" />
+    </bean>
+
+    <!-- 配置JMS模版 -->
+    <bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+        <property name="connectionFactory"  ref="jmsFactory"/>
+        <property name="deliveryPersistent" value="true" />
+    </bean>
+
+    <bean id="dstConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+        <property name="brokerURL" value="tcp://192.168.1.197:61616?tcpNoDelay=true" />
+        <property name="useAsyncSend" value="false" />
+    </bean>
+
+    <!-- 配置connectionFactory -->
+    <bean id="dstJmsFactory" class="org.springframework.jms.connection.CachingConnectionFactory">
+        <property name="targetConnectionFactory" ref="dstConnectionFactory" />
+        <property name="sessionCacheSize" value="10" />
+    </bean>
+
+    <!-- 配置JMS模版 -->
+    <bean id="dstJmsTemplate" class="org.springframework.jms.core.JmsTemplate">
+        <property name="connectionFactory"  ref="dstJmsFactory"/>
+        <property name="deliveryPersistent" value="true" />
+    </bean>
+
+    <bean id="generalMessageListener" class="me.maxwell.tools.jms_bridge.GeneralMessageBridge">
+        <constructor-arg name="srcJmsTpl" ref="jmsTemplate" />
+        <constructor-arg name="dstJmsTpl" ref="dstJmsTemplate" />
+    </bean>
+</beans>
