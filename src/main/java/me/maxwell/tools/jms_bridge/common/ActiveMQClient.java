@@ -1,5 +1,6 @@
 package me.maxwell.tools.jms_bridge.common;
 
+import javax.jms.JMSException;
 import javax.jms.Message;
 import java.io.Closeable;
 
@@ -10,12 +11,14 @@ import java.io.Closeable;
  */
 public interface ActiveMQClient extends Closeable {
 
-    void startSession();
+    String getName();
 
-    void closeSession();
+    void commitTransaction() throws JMSException;
 
-    Message receive(String queue, long waitTime);
+    void rollbackTransaction() throws JMSException;
 
-    void send(String queue, Message msg);
+    Message receive(String queue, long waitTime) throws JMSException;
+
+    void send(String queue, Message msg) throws JMSException;
 
 }

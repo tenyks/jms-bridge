@@ -1,6 +1,8 @@
 package me.maxwell.tools.jms_bridge.common;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.jms.*;
 import java.io.IOException;
@@ -12,86 +14,93 @@ import java.io.IOException;
  */
 public class ActiveMQClientImpl implements ActiveMQClient {
 
+    private static final Logger log = LoggerFactory.getLogger(ActiveMQClientImpl.class);
+
+    private String name;
+
     private Connection connection;
 
     private Session session;
 
-    public ActiveMQClientImpl(String url) {
+    private MessageConsumer consumer;
+
+    private MessageProducer producer;
+
+    public ActiveMQClientImpl(String name, String url) {
+        this.name = name;
+
         try {
-            ConnectionFactory   cf = new ActiveMQConnectionFactory(url);
+            ActiveMQConnectionFactory cf = new ActiveMQConnectionFactory(url);
+            cf.setAlwaysSessionAsync(false);
+            cf.setAlwaysSyncSend(true);
+
             Connection connection = cf.createConnection();
             connection.start();
 
             this.connection = connection;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public void startSession() {
-        try {
             this.session = connection.createSession(true, Session.AUTO_ACKNOWLEDGE);
-        } catch (JMSException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            log.error("[0x09AMQCI3536]初始化时异常失败：", e);
         }
     }
 
     @Override
-    public void closeSession() {
-        try {
-            this.session.commit();
-            this.session.close();
-
-            this.session = null;
-        } catch (JMSException e) {
-            e.printStackTrace();
-        }
+    public String getName() {
+        return name;
     }
 
     @Override
-    public Message receive(String queue, long waitTime) {
-        try {
+    public void commitTransaction() throws JMSException {
+        this.session.commit();
+    }
+
+    @Override
+    public void rollbackTransaction() throws JMSException {
+        this.session.rollback();
+    }
+
+    @Override
+    public Message receive(String queue, long waitTime) throws JMSException {
+        if (consumer == null) {
             Destination destination = session.createQueue(queue);
-            MessageConsumer consumer = session.createConsumer(destination);
-
-            Message msg = consumer.receive(waitTime);
-            consumer.close();
-
-            return msg;
-        } catch (JMSException e) {
-            e.printStackTrace();
+            consumer = session.createConsumer(destination);
         }
 
-        return null;
+        Message msg = consumer.receive(waitTime);
+//        consumer.close();
+
+        return msg;
     }
 
     @Override
-    public void send(String queue, Message msg) {
+    public void send(String queue, Message msg) throws JMSException {
         if (msg == null) return ;
 
-        try {
+        if (producer == null) {
             Destination destination = session.createQueue(queue);
-            MessageProducer producer = session.createProducer(destination);
-
-            producer.send(msg);
-            producer.close();
-        } catch (JMSException e) {
-            e.printStackTrace();
+            producer = session.createProducer(destination);
         }
+
+        producer.send(msg);
+//        producer.close();
     }
 
     @Override
     public void close() throws IOException {
         if (session != null) {
-            closeSession();
+            try {
+                session.close();
+            } catch (JMSException e) {
+                log.error("[0x09AMQCI10337]关闭Session时异常失败：", e);
+            }
+            session = null;
         }
 
         if (this.connection != null) {
             try {
                 this.connection.close();
             } catch (JMSException e) {
-                e.printStackTrace();
+                log.error("[0x09AMQCI11137]关闭Connection时异常失败：", e);
             }
             this.connection = null;
         }

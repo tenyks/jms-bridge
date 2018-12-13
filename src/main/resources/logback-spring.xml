@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <property name="LOG_DIR" value="logs"/>
+
+    <!-- Output to Console -->
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{MM-dd HH:mm:ss} %magenta([%thread]) %highlight(%-5level) %c:%L - %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <File>${LOG_DIR}/require.log</File>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <FileNamePattern>
+                ${LOG_DIR}/require-%d{yyyy-MM-dd}.log
+            </FileNamePattern>
+            <MaxHistory>15</MaxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{HH:mm:ss} [%thread] %-5level %logger{36}.%M - %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <springProfile name="dev">
+        <root level="DEBUG">
+            <appender-ref ref="STDOUT"/>
+            <appender-ref ref="FILE"/>
+        </root>
+
+        <logger name="me.maxwell" level="DEBUG" />
+        <logger name="org.zalando.logbook" level="TRACE" />
+        <logger name="org.springframework" level="WARN" />
+        <logger name="springfox.documentation.spring" level="WARN" />
+        <logger name="org.apache.activemq.ActiveMQSession" level="WARN" />
+    </springProfile>
+
+    <springProfile name="prod">
+        <root level="INFO">
+            <appender-ref ref="STDOUT"/>
+            <appender-ref ref="FILE"/>
+        </root>
+
+        <logger name="me.maxwell" level="INFO" />
+        <logger name="org.zalando.logbook" level="TRACE" />
+        <logger name="org.springframework" level="WARN" />
+        <logger name="springfox.documentation.spring" level="WARN" />
+        <logger name="org.apache.activemq.ActiveMQSession" level="WARN" />
+    </springProfile>
+</configuration>

@@ -4,42 +4,24 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans
         http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-    <bean id="connectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
-        <property name="brokerURL" value="tcp://192.168.4.250:61616?tcpNoDelay=true" />
-        <property name="useAsyncSend" value="false" />
+    <bean id="pltPay2ecsp-dev" class="me.maxwell.tools.jms_bridge.GeneralMessageBridge">
+        <constructor-arg name="srcName" value="src" />
+        <constructor-arg name="srcUrl" value="tcp://192.168.1.197:61616?jms.alwaysSessionAsync=false&amp;jms.alwaysSyncSend=true" />
+        <constructor-arg name="srcQueue" value="demo.src" />
+        <constructor-arg name="dstName" value="dst" />
+        <constructor-arg name="dstUrl" value="tcp://192.168.1.197:61616" />
+        <constructor-arg name="dstQueue" value="demo.dst" />
+
+        <property name="delayTimeOnError" value="30000" />
+        <property name="epochDuration" value="900000" />
     </bean>
 
-    <!-- 配置connectionFactory -->
-    <bean id="jmsFactory" class="org.springframework.jms.connection.CachingConnectionFactory">
-        <property name="targetConnectionFactory" ref="connectionFactory" />
-        <property name="sessionCacheSize" value="10" />
+    <bean id="maintainContext" class="me.maxwell.tools.jms_bridge.MaintainContext">
+        <constructor-arg name="bridges">
+            <list>
+                <ref bean="pltPay2ecsp-dev"/>
+            </list>
+        </constructor-arg>
     </bean>
 
-    <!-- 配置JMS模版 -->
-    <bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">
-        <property name="connectionFactory"  ref="jmsFactory"/>
-        <property name="deliveryPersistent" value="true" />
-    </bean>
-
-    <bean id="dstConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
-        <property name="brokerURL" value="tcp://192.168.1.197:61616?tcpNoDelay=true" />
-        <property name="useAsyncSend" value="false" />
-    </bean>
-
-    <!-- 配置connectionFactory -->
-    <bean id="dstJmsFactory" class="org.springframework.jms.connection.CachingConnectionFactory">
-        <property name="targetConnectionFactory" ref="dstConnectionFactory" />
-        <property name="sessionCacheSize" value="10" />
-    </bean>
-
-    <!-- 配置JMS模版 -->
-    <bean id="dstJmsTemplate" class="org.springframework.jms.core.JmsTemplate">
-        <property name="connectionFactory"  ref="dstJmsFactory"/>
-        <property name="deliveryPersistent" value="true" />
-    </bean>
-
-    <bean id="generalMessageListener" class="me.maxwell.tools.jms_bridge.GeneralMessageBridge">
-        <constructor-arg name="srcJmsTpl" ref="jmsTemplate" />
-        <constructor-arg name="dstJmsTpl" ref="dstJmsTemplate" />
-    </bean>
 </beans>

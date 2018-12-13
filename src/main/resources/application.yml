@@ -1,11 +1,11 @@
 #app
 server:
-    port: 8102
+    port: 9101
 
 #spring
 spring:
   application:
-    name: DocConvertServiceApp
+    name: JmsBridgeApp
   profiles:
     active: dev
   devtools:

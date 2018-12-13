@@ -1,56 +1,139 @@
 package me.maxwell.tools.jms_bridge;
 
 import me.maxwell.tools.jms_bridge.common.ActiveMQClient;
+import me.maxwell.tools.jms_bridge.common.ActiveMQClientImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import javax.jms.Message;
-import java.io.Closeable;
-import java.io.IOException;
+import java.util.Date;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * 接收通用消息；
  * @author Maxwell.Lee
- * @date 2018-12-11 17:30
+ * @date 2018-12-12 10:32
  * @since 1.0.0
  */
-public class GeneralMessageBridge implements Closeable {
+public class GeneralMessageBridge implements Runnable {
 
-    private static final long DefaultWaitTime = 30000;
+    private static final Logger     log = LoggerFactory.getLogger(GeneralMessageBridge.class);
 
-    private ActiveMQClient srcClient;
+    private String   srcName;
 
-    private String  srcQueue;
+    private String   srcUrl;
 
-    private ActiveMQClient dstClient;
+    private String   srcQueue;
 
-    private String  dstQueue;
+    private String   dstName;
 
-    public GeneralMessageBridge(ActiveMQClient srcClient, String srcQueue,
-                                ActiveMQClient dstClient, String dstQueue) {
-        this.srcClient = srcClient;
-        this.dstClient = dstClient;
+    private String   dstUrl;
+
+    private String   dstQueue;
+
+    private String   description;
+
+    private Long    delayTimeOnError = 30 * 1000L;//30秒；
+
+    private Long    epochDuration = 5 * 60 * 1000L;//5分钟；
+
+    private final AtomicLong lastHeartBeatTime = new AtomicLong(0);
+
+    public GeneralMessageBridge(String srcName, String srcUrl, String srcQueue,
+                                String dstName, String dstUrl, String dstQueue) {
+        this.srcName = srcName;
+        this.srcUrl = srcUrl;
+        this.srcQueue = srcQueue;
+
+        this.dstName = dstName;
+        this.dstUrl = dstUrl;
+        this.dstQueue = dstQueue;
+
+        this.description = String.format("Bridge(%s => %s)", srcName, dstName);
     }
 
-    public void handle() {
-        srcClient.startSession();
+    public boolean checkAlive() {
+        long lt = lastHeartBeatTime.get();
 
-        final Message msg = srcClient.receive(srcQueue, DefaultWaitTime);
-
-        dstClient.startSession();
-        dstClient.send(dstQueue, msg);
-
-        dstClient.closeSession();
-        srcClient.closeSession();
+        return (System.currentTimeMillis() - lt < delayTimeOnError * 2);
     }
 
-    public void close() throws IOException {
-        if (srcClient != null) {
-            this.srcClient.close();
-            this.srcClient = null;
+    @Override
+    public void run() {
+        int seqNo = 1;
+
+        while (true) {
+            int flag = launchOneEpoch(seqNo++);
+
+            if (flag < 0) {
+                log.info("[{}]等待{}毫秒，再运行。", description, delayTimeOnError);
+                try {
+                    Thread.sleep(delayTimeOnError);
+                } catch (InterruptedException e) {
+                    log.info("[{}]收到停机信号，退出。", description);
+                    return ;
+                }
+            } else {
+                log.info("[{}]即将开始新得世代。", description);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    log.info("[{}]收到停机信号，退出。", description);
+                    return ;
+                }
+            }
         }
-        if (dstClient != null) {
-            this.dstClient.close();
-            this.dstClient = null;
+    }
+
+    public String   getDescription() {
+        return description;
+    }
+
+    private int launchOneEpoch(int seqNo) {
+        long bt = System.currentTimeMillis();
+
+        try {
+            log.info("[{}]第{}世代开始...", description, seqNo);
+
+            ActiveMQClient srcClient = new ActiveMQClientImpl(srcName, srcUrl);
+            ActiveMQClient dstClient = new ActiveMQClientImpl(dstName, dstUrl);
+
+            GeneralMessageForward forward = new GeneralMessageForward(srcClient, srcQueue,
+                                                                        dstClient, dstQueue, lastHeartBeatTime);
+
+            int flag = forward.start(epochDuration);
+            String epochTimeDesc = getEpochTimeDesc(bt, System.currentTimeMillis());
+            log.info("[{}]第{}世代结束, {}, flag={}。", description, seqNo, epochTimeDesc, flag);
+
+            return flag;
+        } catch (Exception e) {
+            String epochTimeDesc = getEpochTimeDesc(bt, System.currentTimeMillis());
+            log.error("[{}]第{}世代异常结束， {}：", description, seqNo, epochTimeDesc, e);
+            return -1;
         }
     }
 
+    private String getEpochTimeDesc(long beginTime, long endTime) {
+        Date bt = new Date(beginTime);
+        Date et = new Date(endTime);
+
+        String btStr = String.format("%tm%td%tH%tM%tS", bt, bt, bt, bt, bt);
+        String etStr = String.format("%tm%td%tH%tM%tS", et, et, et, et, et);
+
+        return String.format("%s -> %s", btStr, etStr);
+    }
+
+    public Long getDelayTimeOnError() {
+        return delayTimeOnError;
+    }
+
+    public void setDelayTimeOnError(Long delayTimeOnError) {
+        this.delayTimeOnError = delayTimeOnError;
+    }
+
+    public Long getEpochDuration() {
+        return epochDuration;
+    }
+
+    public void setEpochDuration(Long epochDuration) {
+        this.epochDuration = epochDuration;
+    }
 }
