@@ -68,7 +68,10 @@ public class GeneralMessageForward implements Closeable {
         try {
             lastHeartBeat.set(System.currentTimeMillis());
             Message msg = srcClient.receive(srcQueue, DefaultWaitTime);
-            if (msg == null) return 0;
+            if (msg == null) {
+                log.debug("[Forward][{}]没有消息需要转发。", description);
+                return 0;
+            }
 
             dstClient.send(dstQueue, msg);
             dstClient.commitTransaction();
