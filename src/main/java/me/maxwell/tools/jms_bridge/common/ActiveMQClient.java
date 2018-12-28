@@ -9,7 +9,7 @@ import java.io.Closeable;
  * @date 2018-12-11 19:04
  * @since 1.0.0
  */
-public interface ActiveMQClient extends Closeable {
+public interface ActiveMQClient {
 
     String getName();
 
@@ -21,4 +21,5 @@ public interface ActiveMQClient extends Closeable {
 
     void send(String queue, Message msg) throws JMSException;
 
+    void close();
 }

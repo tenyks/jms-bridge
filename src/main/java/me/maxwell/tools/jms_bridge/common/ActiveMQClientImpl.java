@@ -5,7 +5,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.jms.*;
-import java.io.IOException;
 
 /**
  * @author Maxwell.Lee
@@ -86,7 +85,7 @@ public class ActiveMQClientImpl implements ActiveMQClient {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         if (session != null) {
             try {
                 session.close();

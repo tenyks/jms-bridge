@@ -5,6 +5,7 @@ import me.maxwell.tools.jms_bridge.common.ActiveMQClientImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -90,11 +91,13 @@ public class GeneralMessageBridge implements Runnable {
     private int launchOneEpoch(int seqNo) {
         long bt = System.currentTimeMillis();
 
+        ActiveMQClient srcClient = null;
+        ActiveMQClient dstClient = null;
         try {
             log.info("[{}]第{}世代开始...", description, seqNo);
 
-            ActiveMQClient srcClient = new ActiveMQClientImpl(srcName, srcUrl);
-            ActiveMQClient dstClient = new ActiveMQClientImpl(dstName, dstUrl);
+            srcClient = new ActiveMQClientImpl(srcName, srcUrl);
+            dstClient = new ActiveMQClientImpl(dstName, dstUrl);
 
             GeneralMessageForward forward = new GeneralMessageForward(srcClient, srcQueue,
                                                                         dstClient, dstQueue, lastHeartBeatTime);
@@ -108,6 +111,15 @@ public class GeneralMessageBridge implements Runnable {
             String epochTimeDesc = getEpochTimeDesc(bt, System.currentTimeMillis());
             log.error("[{}]第{}世代异常结束， {}：", description, seqNo, epochTimeDesc, e);
             return -1;
+        } finally {
+            if (srcClient != null) {
+                srcClient.close();
+                srcClient = null;
+            }
+            if (dstClient != null) {
+                dstClient.close();
+                dstClient = null;
+            }
         }
     }
 
