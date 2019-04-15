@@ -9,7 +9,7 @@
         <constructor-arg name="srcUrl" value="tcp://ActiveMQServerHostProd:61616" />
         <constructor-arg name="srcQueue" value="ecsp-dev.MoneyArrivalEvent" />
         <constructor-arg name="dstName" value="dst" />
-        <constructor-arg name="dstUrl" value="tcp://ActiveMQServerOfEcspDev:50001" />
+        <constructor-arg name="dstUrl" value="tcp://ActiveMQServerOfEcspDev:50002" />
         <constructor-arg name="dstQueue" value="MoneyArrivalEventQueue" />
 
         <property name="delayTimeOnError" value="30000" />
