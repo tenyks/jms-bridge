@@ -44,7 +44,7 @@
     <bean id="maintainContext" class="me.maxwell.tools.jms_bridge.MaintainContext">
         <constructor-arg name="bridges">
             <list>
-                <!--<ref bean="pltPay2ecsp-dev" />-->
+                <ref bean="pltPay2ecsp-dev" />
                 <ref bean="pltPay2zwjx-beta" />
                 <ref bean="pltPay2zwjx-prod"/>
             </list>
