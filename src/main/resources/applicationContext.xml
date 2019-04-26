@@ -34,7 +34,7 @@
     <bean id="pltPay2ecsp-prod" class="me.maxwell.tools.jms_bridge.GeneralMessageBridge">
         <constructor-arg name="srcName" value="src" />
         <constructor-arg name="srcUrl" value="tcp://ActiveMQServerHostProd:61616" />
-        <constructor-arg name="srcQueue" value="ecsp-5.MoneyArrivalEvent" />
+        <constructor-arg name="srcQueue" value="ecsp.MoneyArrivalEvent" />
         <constructor-arg name="dstName" value="dst" />
         <constructor-arg name="dstUrl" value="tcp://ActiveMQServerHostProd:61616" />
         <constructor-arg name="dstQueue" value="MoneyArrivalEventQueue" />
