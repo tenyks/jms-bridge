@@ -4,53 +4,14 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans
         http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-    <!-- For ecsp-dev-->
-    <bean id="pltPay2ecsp-dev" class="me.maxwell.tools.jms_bridge.GeneralMessageBridge">
+    <!-- For ynxt-dev-->
+    <bean id="pltPay2ynxt-dev" class="me.maxwell.tools.jms_bridge.GeneralMessageBridge">
         <constructor-arg name="srcName" value="src" />
-        <constructor-arg name="srcUrl" value="tcp://ActiveMQServerHostProd:61616" />
-        <constructor-arg name="srcQueue" value="ecsp-dev.MoneyArrivalEvent" />
+        <constructor-arg name="srcUrl" value="tcp://localhost:50002" />
+        <constructor-arg name="srcQueue" value="MoneyArrivalEvent.ynxt" />
         <constructor-arg name="dstName" value="dst" />
-        <constructor-arg name="dstUrl" value="tcp://ActiveMQServerOfEcspDev:50002" />
-        <constructor-arg name="dstQueue" value="MoneyArrivalEventQueue" />
-
-        <property name="delayTimeOnError" value="30000" />
-        <property name="epochDuration" value="900000" />
-    </bean>
-
-    <!-- For zwjx-beta-->
-    <bean id="pltPay2zwjx-beta" class="me.maxwell.tools.jms_bridge.GeneralMessageBridge">
-        <constructor-arg name="srcName" value="src" />
-        <constructor-arg name="srcUrl" value="tcp://ActiveMQServerHostProd:61616" />
-        <constructor-arg name="srcQueue" value="ecsp-dev-5.MoneyArrivalEvent" />
-        <constructor-arg name="dstName" value="dst" />
-        <constructor-arg name="dstUrl" value="tcp://ActiveMQServerOfEcspDev:50002" />
-        <constructor-arg name="dstQueue" value="MoneyArrivalEventQueue" />
-
-        <property name="delayTimeOnError" value="30000" />
-        <property name="epochDuration" value="900000" />
-    </bean>
-
-    <!--For ecsp App [Production]-->
-    <bean id="pltPay2ecsp-prod" class="me.maxwell.tools.jms_bridge.GeneralMessageBridge">
-        <constructor-arg name="srcName" value="src" />
-        <constructor-arg name="srcUrl" value="tcp://ActiveMQServerHostProd:61616" />
-        <constructor-arg name="srcQueue" value="ecsp.MoneyArrivalEvent" />
-        <constructor-arg name="dstName" value="dst" />
-        <constructor-arg name="dstUrl" value="tcp://ActiveMQServerHostProd:61616" />
-        <constructor-arg name="dstQueue" value="MoneyArrivalEventQueue" />
-
-        <property name="delayTimeOnError" value="30000" />
-        <property name="epochDuration" value="900000" />
-    </bean>
-
-    <!--For ecsp-5 [ZWJX Production]-->
-    <bean id="pltPay2zwjx-prod" class="me.maxwell.tools.jms_bridge.GeneralMessageBridge">
-        <constructor-arg name="srcName" value="src" />
-        <constructor-arg name="srcUrl" value="tcp://ActiveMQServerHostProd:61616" />
-        <constructor-arg name="srcQueue" value="ecsp-5.MoneyArrivalEvent" />
-        <constructor-arg name="dstName" value="dst" />
-        <constructor-arg name="dstUrl" value="tcp://ActiveMQServerOfZwjx:50003" />
-        <constructor-arg name="dstQueue" value="MoneyArrivalEventQueue" />
+        <constructor-arg name="dstUrl" value="tcp://ActiveMQServerOfYNXTDev:61616" />
+        <constructor-arg name="dstQueue" value="MoneyArrivalEvent.ynxt" />
 
         <property name="delayTimeOnError" value="30000" />
         <property name="epochDuration" value="900000" />
@@ -59,10 +20,7 @@
     <bean id="maintainContext" class="me.maxwell.tools.jms_bridge.MaintainContext">
         <constructor-arg name="bridges">
             <list>
-                <ref bean="pltPay2ecsp-dev" />
-                <ref bean="pltPay2zwjx-beta" />
-                <ref bean="pltPay2ecsp-prod"/>
-                <ref bean="pltPay2zwjx-prod"/>
+                <ref bean="pltPay2ynxt-dev" />
             </list>
         </constructor-arg>
     </bean>
