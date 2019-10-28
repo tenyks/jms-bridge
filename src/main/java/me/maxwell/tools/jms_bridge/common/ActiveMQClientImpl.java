@@ -25,6 +25,8 @@ public class ActiveMQClientImpl implements ActiveMQClient {
 
     private MessageProducer producer;
 
+    private MessageProducer producer2;
+
     public ActiveMQClientImpl(String name, String url) {
         this.name = name;
 
@@ -82,6 +84,23 @@ public class ActiveMQClientImpl implements ActiveMQClient {
 
         producer.send(msg);
 //        producer.close();
+    }
+
+    @Override
+    public void send(String queue, String queue2, Message msg) throws JMSException {
+        if (msg == null) return ;
+
+        if (producer == null) {
+            Destination destination = session.createQueue(queue);
+            producer = session.createProducer(destination);
+        }
+        producer.send(msg);
+
+        if (producer2 == null) {
+            Destination destination = session.createQueue(queue2);
+            producer2 = session.createProducer(destination);
+        }
+        producer2.send(msg);
     }
 
     @Override

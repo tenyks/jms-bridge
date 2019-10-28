@@ -30,6 +30,8 @@ public class GeneralMessageBridge implements Runnable {
 
     private String   dstQueue;
 
+    private String   dstQueueClone;
+
     private String   description;
 
     private Long    delayTimeOnError = 30 * 1000L;//30秒；
@@ -47,6 +49,20 @@ public class GeneralMessageBridge implements Runnable {
         this.dstName = dstName;
         this.dstUrl = dstUrl;
         this.dstQueue = dstQueue;
+
+        this.description = String.format("Bridge(%s => %s)", srcName, dstName);
+    }
+
+    public GeneralMessageBridge(String srcName, String srcUrl, String srcQueue,
+                                String dstName, String dstUrl, String dstQueue, String dstQueueClone) {
+        this.srcName = srcName;
+        this.srcUrl = srcUrl;
+        this.srcQueue = srcQueue;
+
+        this.dstName = dstName;
+        this.dstUrl = dstUrl;
+        this.dstQueue = dstQueue;
+        this.dstQueueClone = dstQueueClone;
 
         this.description = String.format("Bridge(%s => %s)", srcName, dstName);
     }
@@ -93,14 +109,19 @@ public class GeneralMessageBridge implements Runnable {
 
         ActiveMQClient srcClient = null;
         ActiveMQClient dstClient = null;
+
         try {
             log.info("[{}]第{}世代开始...", description, seqNo);
 
             srcClient = new ActiveMQClientImpl(srcName, srcUrl);
             dstClient = new ActiveMQClientImpl(dstName, dstUrl);
 
-            GeneralMessageForward forward = new GeneralMessageForward(srcClient, srcQueue,
-                                                                        dstClient, dstQueue, lastHeartBeatTime);
+            GeneralMessageForward forward;
+            if (dstQueueClone == null) {
+                forward = new GeneralMessageForward(srcClient, srcQueue, dstClient, dstQueue, lastHeartBeatTime);
+            } else {
+                forward = new GeneralMessageForward(srcClient, srcQueue, dstClient, dstQueue, dstQueueClone, lastHeartBeatTime);
+            }
 
             int flag = forward.start(epochDuration);
             String epochTimeDesc = getEpochTimeDesc(bt, System.currentTimeMillis());

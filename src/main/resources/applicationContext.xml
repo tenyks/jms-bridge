@@ -12,6 +12,7 @@
         <constructor-arg name="dstName" value="dst" />
         <constructor-arg name="dstUrl" value="tcp://ActiveMQServerOfYNXTDev:61616" />
         <constructor-arg name="dstQueue" value="MoneyArrivalEvent.ynxt" />
+        <constructor-arg name="dstQueueClone" value="MoneyArrivalEvent.ynxt.debug" />
 
         <property name="delayTimeOnError" value="30000" />
         <property name="epochDuration" value="900000" />

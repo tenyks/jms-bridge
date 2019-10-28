@@ -31,6 +31,8 @@ public class GeneralMessageForward implements Closeable {
 
     private String  dstQueue;
 
+    private String  dstQueueClone;
+
     private String  description;
 
     private AtomicLong lastHeartBeat;
@@ -50,6 +52,25 @@ public class GeneralMessageForward implements Closeable {
 
         this.lastHeartBeat = lastHeartBeat;
         this.description = String.format("%s/%s => %s/%s", srcClient.getName(), srcQueue, dstClient.getName(), dstQueue);
+    }
+
+    public GeneralMessageForward(ActiveMQClient srcClient, String srcQueue,
+                                 ActiveMQClient dstClient, String dstQueue, String dstQueueClone,
+                                 AtomicLong lastHeartBeat) {
+        if (srcClient == null || srcQueue == null || dstClient == null || dstQueue == null || dstQueueClone == null) {
+            throw new IllegalArgumentException("参数不全。[0x02GMB3664]");
+        }
+
+        this.srcClient = srcClient;
+        this.dstClient = dstClient;
+
+        this.srcQueue = srcQueue;
+        this.dstQueue = dstQueue;
+        this.dstQueueClone = dstQueueClone;
+
+        this.lastHeartBeat = lastHeartBeat;
+        this.description = String.format("%s/%s => %s/[%s,%s]", srcClient.getName(), srcQueue,
+                                        dstClient.getName(), dstQueue, dstQueueClone);
     }
 
     public int start(long durationTime) throws JMSException {
@@ -73,7 +94,11 @@ public class GeneralMessageForward implements Closeable {
                 return 0;
             }
 
-            dstClient.send(dstQueue, msg);
+            if (dstQueueClone != null) {
+                dstClient.send(dstQueue, dstQueueClone, msg);
+            } else {
+                dstClient.send(dstQueue, msg);
+            }
             dstClient.commitTransaction();
 
             if (log.isInfoEnabled()) {

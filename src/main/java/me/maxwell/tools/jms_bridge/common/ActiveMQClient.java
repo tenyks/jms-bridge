@@ -21,5 +21,7 @@ public interface ActiveMQClient {
 
     void send(String queue, Message msg) throws JMSException;
 
+    void send(String queue, String queue2, Message msg) throws JMSException;
+
     void close();
 }
