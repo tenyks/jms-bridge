@@ -1,4 +1,6 @@
-package me.maxwell.tools.jms_bridge;
+package me.maxwell.tools.jms_bridge.config;
+
+import me.maxwell.tools.jms_bridge.GeneralMessageBridge;
 
 import java.util.List;
 

@@ -4,26 +4,5 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans
         http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-    <!-- For ynxt-dev-->
-    <bean id="pltPay2ynxt-dev" class="me.maxwell.tools.jms_bridge.GeneralMessageBridge">
-        <constructor-arg name="srcName" value="src" />
-        <constructor-arg name="srcUrl" value="tcp://localhost:50002" />
-        <constructor-arg name="srcQueue" value="MoneyArrivalEvent.ynxt" />
-        <constructor-arg name="dstName" value="dst" />
-        <constructor-arg name="dstUrl" value="tcp://ActiveMQServerOfYNXTDev:61616" />
-        <constructor-arg name="dstQueue" value="MoneyArrivalEvent.ynxt" />
-        <constructor-arg name="dstQueueClone" value="MoneyArrivalEvent.ynxt.debug" />
-
-        <property name="delayTimeOnError" value="30000" />
-        <property name="epochDuration" value="900000" />
-    </bean>
-
-    <bean id="maintainContext" class="me.maxwell.tools.jms_bridge.MaintainContext">
-        <constructor-arg name="bridges">
-            <list>
-                <ref bean="pltPay2ynxt-dev" />
-            </list>
-        </constructor-arg>
-    </bean>
 
 </beans>

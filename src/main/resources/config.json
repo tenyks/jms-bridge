@@ -1,0 +1,14 @@
+[
+  {
+    "srcName": "biz-dev",
+    "srcUrl": "tcp://192.168.1.11:61616",
+    "srcQueue": "sat.SyncSAT2BizQueue.local",
+    "dstName": "sat-dev",
+    "dstUrl": "tcp://192.168.1.11:61616",
+    "dstQueue": "sat.SyncSAT2BizQueue.copy1",
+    "dstQueueClone": "sat.SyncSAT2BizQueue.copy2",
+    "delayTimeOnError": 30000,
+    "epochDuration": 300000,
+    "description": "测试JMS Bridge"
+  }
+]

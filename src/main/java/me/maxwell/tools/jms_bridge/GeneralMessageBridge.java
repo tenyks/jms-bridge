@@ -5,7 +5,6 @@ import me.maxwell.tools.jms_bridge.common.ActiveMQClientImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.Date;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -18,59 +17,22 @@ public class GeneralMessageBridge implements Runnable {
 
     private static final Logger     log = LoggerFactory.getLogger(GeneralMessageBridge.class);
 
-    private String   srcName;
-
-    private String   srcUrl;
-
-    private String   srcQueue;
-
-    private String   dstName;
-
-    private String   dstUrl;
-
-    private String   dstQueue;
-
-    private String   dstQueueClone;
-
-    private String   description;
-
-    private Long    delayTimeOnError = 30 * 1000L;//30秒；
-
-    private Long    epochDuration = 5 * 60 * 1000L;//5分钟；
+    private MessageBridgeBean   bean;
 
     private final AtomicLong lastHeartBeatTime = new AtomicLong(0);
 
-    public GeneralMessageBridge(String srcName, String srcUrl, String srcQueue,
-                                String dstName, String dstUrl, String dstQueue) {
-        this.srcName = srcName;
-        this.srcUrl = srcUrl;
-        this.srcQueue = srcQueue;
+    public GeneralMessageBridge(MessageBridgeBean bean) {
+        if (bean.getDescription() == null) {
+            bean.setDescription(String.format("Bridge(%s => %s)", bean.getSrcName(), bean.getDstName()));
+        }
 
-        this.dstName = dstName;
-        this.dstUrl = dstUrl;
-        this.dstQueue = dstQueue;
-
-        this.description = String.format("Bridge(%s => %s)", srcName, dstName);
-    }
-
-    public GeneralMessageBridge(String srcName, String srcUrl, String srcQueue,
-                                String dstName, String dstUrl, String dstQueue, String dstQueueClone) {
-        this.srcName = srcName;
-        this.srcUrl = srcUrl;
-        this.srcQueue = srcQueue;
-
-        this.dstName = dstName;
-        this.dstUrl = dstUrl;
-        this.dstQueue = dstQueue;
-        this.dstQueueClone = dstQueueClone;
-
-        this.description = String.format("Bridge(%s => %s)", srcName, dstName);
+        this.bean = bean;
     }
 
     public boolean checkAlive() {
         long lt = lastHeartBeatTime.get();
 
-        return (System.currentTimeMillis() - lt < delayTimeOnError * 2);
+        return (System.currentTimeMillis() - lt < bean.getDelayTimeOnError() * 2);
     }
 
     @Override
@@ -81,19 +43,19 @@ public class GeneralMessageBridge implements Runnable {
             int flag = launchOneEpoch(seqNo++);
 
             if (flag < 0) {
-                log.info("[{}]等待{}毫秒，再运行。", description, delayTimeOnError);
+                log.info("[{}]等待{}毫秒，再运行。", bean.getDescription(), bean.getDelayTimeOnError());
                 try {
-                    Thread.sleep(delayTimeOnError);
+                    Thread.sleep(bean.getDelayTimeOnError());
                 } catch (InterruptedException e) {
-                    log.info("[{}]收到停机信号，退出。", description);
+                    log.info("[{}]收到停机信号，退出。", bean.getDescription());
                     return ;
                 }
             } else {
-                log.info("[{}]即将开始新得世代。", description);
+                log.info("[{}]即将开始新得世代。", bean.getDescription());
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
-                    log.info("[{}]收到停机信号，退出。", description);
+                    log.info("[{}]收到停机信号，退出。", bean.getDescription());
                     return ;
                 }
             }
@@ -101,7 +63,7 @@ public class GeneralMessageBridge implements Runnable {
     }
 
     public String   getDescription() {
-        return description;
+        return bean.getDescription();
     }
 
     private int launchOneEpoch(int seqNo) {
@@ -111,26 +73,28 @@ public class GeneralMessageBridge implements Runnable {
         ActiveMQClient dstClient = null;
 
         try {
-            log.info("[{}]第{}世代开始...", description, seqNo);
+            log.info("[{}]第{}世代开始...", bean.getDescription(), seqNo);
 
-            srcClient = new ActiveMQClientImpl(srcName, srcUrl);
-            dstClient = new ActiveMQClientImpl(dstName, dstUrl);
+            srcClient = new ActiveMQClientImpl(bean.getSrcName(), bean.getSrcUrl());
+            dstClient = new ActiveMQClientImpl(bean.getDstName(), bean.getDstUrl());
 
             GeneralMessageForward forward;
-            if (dstQueueClone == null) {
-                forward = new GeneralMessageForward(srcClient, srcQueue, dstClient, dstQueue, lastHeartBeatTime);
+            if (bean.getDstQueueClone() == null) {
+                forward = new GeneralMessageForward(srcClient, bean.getSrcQueue(), dstClient, bean.getDstQueue(),
+                                                    lastHeartBeatTime);
             } else {
-                forward = new GeneralMessageForward(srcClient, srcQueue, dstClient, dstQueue, dstQueueClone, lastHeartBeatTime);
+                forward = new GeneralMessageForward(srcClient, bean.getSrcQueue(), dstClient, bean.getDstQueue(),
+                                                    bean.getDstQueueClone(), lastHeartBeatTime);
             }
 
-            int flag = forward.start(epochDuration);
+            int flag = forward.start(bean.getEpochDuration());
             String epochTimeDesc = getEpochTimeDesc(bt, System.currentTimeMillis());
-            log.info("[{}]第{}世代结束, {}, flag={}。", description, seqNo, epochTimeDesc, flag);
+            log.info("[{}]第{}世代结束, {}, flag={}。", bean.getDescription(), seqNo, epochTimeDesc, flag);
 
             return flag;
         } catch (Exception e) {
             String epochTimeDesc = getEpochTimeDesc(bt, System.currentTimeMillis());
-            log.error("[{}]第{}世代异常结束， {}：", description, seqNo, epochTimeDesc, e);
+            log.error("[{}]第{}世代异常结束， {}：", bean.getDescription(), seqNo, epochTimeDesc, e);
             return -1;
         } finally {
             if (srcClient != null) {
@@ -155,18 +119,19 @@ public class GeneralMessageBridge implements Runnable {
     }
 
     public Long getDelayTimeOnError() {
-        return delayTimeOnError;
-    }
-
-    public void setDelayTimeOnError(Long delayTimeOnError) {
-        this.delayTimeOnError = delayTimeOnError;
+        return bean.getDelayTimeOnError();
     }
 
     public Long getEpochDuration() {
-        return epochDuration;
+        return bean.getEpochDuration();
     }
 
-    public void setEpochDuration(Long epochDuration) {
-        this.epochDuration = epochDuration;
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("GeneralMessageBridge{");
+        sb.append("bean=").append(bean);
+        sb.append(", lastHeartBeatTime=").append(lastHeartBeatTime);
+        sb.append('}');
+        return sb.toString();
     }
 }
