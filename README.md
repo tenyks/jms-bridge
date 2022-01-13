@@ -1,2 +1,2 @@
 # jms-bridge
-jms queue to remote jsm queue over internet.
+jms queue to remote jms queue over internet.
